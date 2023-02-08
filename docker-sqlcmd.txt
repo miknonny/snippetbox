@@ -1,0 +1,23 @@
+// setup postgresql container.
+docker run -e POSTGRES_PASSWORD=lol --name=pg --rm -d -p 5432:5432 postgres:14
+docker exec -u postgres -it pg psql
+
+// setup mysql container.
+ docker run --name snippetsdb --rm -d -e MYSQL_ROOT_PASSWORD=apache22 -p 3306:3306 mysql
+
+// access as root user.
+ docker exec -it snippetsdb mysql -u root -p
+
+// access as normal user who can not drop the database.
+ docker exec -it snippetsdb mysql -D snippetbox -u web -p
+
+// Verify that packages match in go.
+file:///Users/silkyhermit/Documents/BOOKS/GO/lets-go/html/04.03-modules-and-reproducible-builds.html
+go mod verify
+
+upgrade a package
+go get -u github.com/foo/bar
+
+
+// ABout database connection pool.
+file:///Users/silkyhermit/Documents/BOOKS/GO/lets-go/html/04.04-creating-a-database-connection-pool.html
