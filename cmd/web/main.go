@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -17,23 +18,24 @@ import (
 // var mylog = log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime.
 
 type application struct {
-	errorLog *log.Logger
-	infoLog  *log.Logger
-	snippets *models.SnippetModel
+	errorLog      *log.Logger
+	infoLog       *log.Logger
+	snippets      *models.SnippetModel
+	templateCache map[string]*template.Template
 }
 
 func main() {
 
-	// converts what value the user puts in to a string. flat.Int(), flag.Bool
+	// setting up flags.
 	addr := flag.String("addr", ":4000", "HTTP network address")
 	dsn := flag.String("dsn", "root:apache22@/snippetbox?parseTime=true", "MySQL data source name")
 	flag.Parse()
 
+	// setting up error.
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Llongfile)
 
 	// open db.
-
 	db, err := openDB(*dsn)
 	if err != nil {
 		errorLog.Fatal(err)
@@ -41,10 +43,17 @@ func main() {
 
 	defer db.Close()
 
+	// Initialize a new template cache...
+	templateCache, err := newTemplateCache()
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
 	app := &application{
-		errorLog: errorLog,
-		infoLog:  infoLog,
-		snippets: &models.SnippetModel{DB: db},
+		errorLog:      errorLog,
+		infoLog:       infoLog,
+		snippets:      &models.SnippetModel{DB: db},
+		templateCache: templateCache,
 	}
 
 	srv := &http.Server{
@@ -55,7 +64,7 @@ func main() {
 
 	infoLog.Println("listening and serving")
 
-	srv.ListenAndServe()
+	// srv.ListenAndServe()
 
 	err = srv.ListenAndServe()
 
