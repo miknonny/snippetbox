@@ -64,10 +64,10 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 // type. Embedding this means that our snippetCreateForm "inherits" all the
 // fields and methods of our Validator type (including the FieldErrors field).
 type snippetCreateForm struct {
-	Title   string
-	Content string
-	Expires int
-	validator.Validator
+	Title               string `form:"title"`
+	Content             string `form:"content"`
+	Expires             int    `form:"expires"`
+	validator.Validator `form:"-"`
 }
 
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
@@ -113,4 +113,82 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 
 	app.sessionManager.Put(r.Context(), "flash", "Snippet successfully created!")
 	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
+}
+
+type userSignupForm struct {
+	Name                string `form:"name"`
+	Email               string `form:"email"`
+	Password            string `form:"password"`
+	validator.Validator `form:"-"`
+}
+
+// Display sign up page.
+func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
+	data := app.newTemplateData(r)
+	data.Form = userSignupForm{}
+	app.render(w, http.StatusOK, "signup.html", data)
+}
+
+// Post signup information.
+func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
+	// holds form information from user.
+	var form userSignupForm
+
+	// retrieve the data from request and store it in the userSignupForm struct.
+	err := app.decodePostForm(r, &form)
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	// validate the userSignForm struct
+	form.CheckField(validator.NotBlank(form.Name), "name", "This field cannot be blank")
+	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
+	form.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "This field must be a valid email address")
+	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
+	form.CheckField(validator.MinChars(form.Password, 8), "password", "This field must be at least 8 characters long")
+
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
+		return
+	}
+
+	// we try to create a user in the database if that user already exists add a message to the form and redisplay it.
+	err = app.users.Insert(form.Name, form.Email, form.Password)
+	if err != nil {
+		if errors.Is(err, models.ErrDuplicateEmail) {
+			form.AddFieldError("email", "Email address is already in use")
+			data := app.newTemplateData(r)
+			data.Form = form
+			app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
+		} else {
+			app.serverError(w, err)
+		}
+
+		return
+	}
+
+	// Add a confirmation flash message to the session confirming that their signup worked.
+	app.sessionManager.Put(r.Context(), "flash", "Your signup was successful. Please log in.")
+
+	// redirect the user to the login page.
+	http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+
+}
+
+// Display login page.
+func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Display a HTML form for logging in a user...")
+}
+
+// Post login information.
+func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Authenticate and login the user...")
+}
+
+// Post logout information.
+func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Logout the user...")
 }

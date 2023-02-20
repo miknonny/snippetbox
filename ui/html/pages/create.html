@@ -10,7 +10,7 @@
         <label class='error'>{{.}}</label>
         {{end}}
         <!-- Re-populate the title data by setting the `value` attribute. -->
-        <input type='text' name='Title' value='{{.Form.Title}}'>
+        <input type='text' name='title' value='{{.Form.Title}}'>
     </div>
     <div>
         <label>Content:</label>
@@ -20,21 +20,21 @@
         <label class='error'>{{.}}</label>
         {{end}}
         <!-- Re-populate the content data as the inner HTML of the textarea. -->
-        <textarea name='Content'>{{.Form.Content}}</textarea>
+        <textarea name='content'>{{.Form.Content}}</textarea>
     </div>
     <div>
         <label>Delete in:</label>
         <!-- And render the value of .Form.FieldErrors.expires if it is not empty. -->
-        {{with .Form.FieldErrors.expires}}
+        {{with .Form.FieldErrors.Expires}}
         <label class='error'>{{.}}</label>
         {{end}}
         <!-- Here we use the `if` action to check if the value of the re-populated
         expires field equals 365. If it does, then we render the `checked`
         attribute so that the radio input is re-selected. -->
-        <input type='radio' name='Expires' value='365' {{if (eq .Form.Expires 365)}}checked{{end}}> One Year
+        <input type='radio' name='expires' value='365' {{if (eq .Form.Expires 365)}}checked{{end}}> One Year
         <!-- And we do the same for the other possible values too... -->
-        <input type='radio' name='Expires' value='7' {{if (eq .Form.Expires 7)}}checked{{end}}> One Week
-        <input type='radio' name='Expires' value='1' {{if (eq .Form.Expires 1)}}checked{{end}}> One Day
+        <input type='radio' name='expires' value='7' {{if (eq .Form.Expires 7)}}checked{{end}}> One Week
+        <input type='radio' name='expires' value='1' {{if (eq .Form.Expires 1)}}checked{{end}}> One Day
     </div>
     <div>
         <input type='submit' value='Publish snippet'>
